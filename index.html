@@ -196,15 +196,15 @@
 
     <div class="field-row">
       <label for="basePrice">Base Price ₹</label>
-      <input type="number" id="basePrice" value="1200" inputmode="decimal">
+      <input type="number" id="basePrice" placeholder="0" inputmode="decimal">
     </div>
     <div class="field-row pct">
       <label for="discount">Discount %</label>
-      <input type="number" id="discount" value="20" inputmode="decimal">
+      <input type="number" id="discount" placeholder="0" inputmode="decimal">
     </div>
     <div class="field-row pct">
       <label for="tax">Tax %</label>
-      <input type="number" id="tax" value="18" inputmode="decimal">
+      <input type="number" id="tax" placeholder="0" inputmode="decimal">
     </div>
 
     <hr class="divider">
@@ -266,7 +266,24 @@
     document.getElementById("lineTax").innerText = "+" + fmt(taxAmt);
   }
 
-  async function calculate() {
+  function resetBreakdown() {
+  document.getElementById("lineBase").innerText = "—";
+  document.getElementById("discountLabel").innerText = "Discount";
+  document.getElementById("lineDiscount").innerText = "—";
+  document.getElementById("lineSubtotal").innerText = "—";
+  document.getElementById("taxLabel").innerText = "Tax";
+  document.getElementById("lineTax").innerText = "—";
+  totalEl.innerText = "—";
+  statusEl.classList.remove("error");
+  statusEl.innerText = "enter a base price to begin";
+}
+
+async function calculate() {
+    if (basePriceEl.value === "") {
+      resetBreakdown();
+      return;
+    }
+
     const base = parseFloat(basePriceEl.value) || 0;
     const discountPct = parseFloat(discountEl.value) || 0;
     const taxPct = parseFloat(taxEl.value) || 0;
@@ -314,7 +331,7 @@
   }
 
   drawBarcode();
-  calculate();
+  resetBreakdown();
 </script>
 
 </body>
