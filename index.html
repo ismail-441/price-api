@@ -1,47 +1,321 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Price Calculator</title>
-  <style>
-    body { font-family: sans-serif; max-width: 400px; margin: 60px auto; }
-    input { display: block; width: 100%; margin-bottom: 12px; padding: 8px; }
-    button { padding: 10px 16px; cursor: pointer; }
-    #result { margin-top: 20px; font-size: 20px; font-weight: bold; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Price Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FBF8F2;
+    --counter:#E7E3D8;
+    --ink:#1F2421;
+    --ink-soft:#5B6058;
+    --rule:#C9C2B4;
+    --accent:#3551E0;
+    --good:#1F7A53;
+    --bad:#C23B22;
+  }
+
+  *{ box-sizing:border-box; }
+
+  body{
+    margin:0;
+    min-height:100vh;
+    background:var(--counter);
+    background-image:
+      radial-gradient(circle at 20% 20%, rgba(0,0,0,0.03) 0, transparent 40%),
+      radial-gradient(circle at 80% 80%, rgba(0,0,0,0.03) 0, transparent 40%);
+    display:flex;
+    justify-content:center;
+    align-items:flex-start;
+    padding:64px 16px;
+    font-family:'Inter', sans-serif;
+    color:var(--ink);
+  }
+
+  .receipt{
+    width:380px;
+    background:var(--paper);
+    padding:36px 28px 18px;
+    box-shadow:0 18px 40px -12px rgba(0,0,0,0.25), 0 2px 6px rgba(0,0,0,0.08);
+    position:relative;
+  }
+
+  /* torn paper edge top */
+  .receipt::before, .receipt::after{
+    content:"";
+    position:absolute;
+    left:0; right:0;
+    height:14px;
+    background:
+      linear-gradient(135deg, var(--paper) 50%, transparent 50%) 0 0/16px 16px repeat-x,
+      linear-gradient(45deg, var(--paper) 50%, transparent 50%) 0 0/16px 16px repeat-x;
+    background-color:transparent;
+  }
+  .receipt::before{ top:-13px; background-position: 0 100%, 8px 100%; }
+  .receipt::after{ bottom:-13px; transform:scaleY(-1); }
+
+  .store{
+    text-align:center;
+    margin-bottom:4px;
+  }
+  .store-name{
+    font-family:'JetBrains Mono', monospace;
+    font-weight:800;
+    font-size:20px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+  }
+  .store-sub{
+    font-size:11px;
+    letter-spacing:1.5px;
+    color:var(--ink-soft);
+    text-transform:uppercase;
+    margin-top:4px;
+  }
+
+  .divider{
+    border:none;
+    border-top:1.5px dashed var(--rule);
+    margin:18px 0;
+  }
+  .divider.heavy{ border-top:2px solid var(--ink); }
+
+  .field-row{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:16px;
+    font-family:'JetBrains Mono', monospace;
+  }
+  .field-row label{
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:1px;
+    color:var(--ink-soft);
+    white-space:nowrap;
+  }
+  .field-row input{
+    flex:1;
+    max-width:110px;
+    text-align:right;
+    border:none;
+    border-bottom:1.5px dashed var(--rule);
+    background:transparent;
+    font-family:'JetBrains Mono', monospace;
+    font-size:15px;
+    font-weight:500;
+    color:var(--ink);
+    padding:2px 0 4px;
+    outline:none;
+  }
+  .field-row input:focus{ border-bottom-color:var(--accent); }
+  .field-row.pct input{ max-width:70px; }
+
+  .line{
+    display:flex;
+    justify-content:space-between;
+    font-family:'JetBrains Mono', monospace;
+    font-size:13.5px;
+    margin-bottom:8px;
+    color:var(--ink);
+  }
+  .line .val{ font-weight:500; }
+  .line.discount .val{ color:var(--bad); }
+  .line.tax .val{ color:var(--good); }
+  .line.muted{ color:var(--ink-soft); }
+
+  .total-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    font-family:'JetBrains Mono', monospace;
+    margin-top:14px;
+  }
+  .total-row .label{
+    font-size:13px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    font-weight:700;
+  }
+  .total-row .amount{
+    font-size:26px;
+    font-weight:800;
+    transition:transform 0.15s ease;
+  }
+  .total-row .amount.pulse{ transform:scale(1.06); color:var(--accent); }
+
+  .status{
+    text-align:center;
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    letter-spacing:1px;
+    color:var(--ink-soft);
+    height:16px;
+    margin-top:14px;
+  }
+  .status.error{ color:var(--bad); }
+
+  .barcode{
+    display:flex;
+    justify-content:center;
+    gap:2px;
+    margin-top:20px;
+    height:32px;
+    align-items:flex-end;
+  }
+  .barcode span{
+    display:inline-block;
+    width:2px;
+    background:var(--ink);
+  }
+
+  .footer-note{
+    text-align:center;
+    font-family:'JetBrains Mono', monospace;
+    font-size:10.5px;
+    letter-spacing:1.5px;
+    color:var(--ink-soft);
+    text-transform:uppercase;
+    margin-top:10px;
+  }
+</style>
 </head>
 <body>
-  <h2>Price Calculator</h2>
 
-  <label>Base Price</label>
-  <input type="number" id="basePrice" value="1200">
+  <div class="receipt">
+    <div class="store">
+      <div class="store-name">Price Calculator</div>
+      <div class="store-sub">Itemised Estimate</div>
+    </div>
 
-  <label>Discount %</label>
-  <input type="number" id="discount" value="20">
+    <hr class="divider">
 
-  <label>Tax %</label>
-  <input type="number" id="tax" value="18">
+    <div class="field-row">
+      <label for="basePrice">Base Price ₹</label>
+      <input type="number" id="basePrice" value="1200" inputmode="decimal">
+    </div>
+    <div class="field-row pct">
+      <label for="discount">Discount %</label>
+      <input type="number" id="discount" value="20" inputmode="decimal">
+    </div>
+    <div class="field-row pct">
+      <label for="tax">Tax %</label>
+      <input type="number" id="tax" value="18" inputmode="decimal">
+    </div>
 
-  <button onclick="calculate()">Calculate</button>
+    <hr class="divider">
 
-  <div id="result"></div>
+    <div class="line">
+      <span>Base Price</span>
+      <span class="val" id="lineBase">₹0.00</span>
+    </div>
+    <div class="line discount">
+      <span id="discountLabel">Discount</span>
+      <span class="val" id="lineDiscount">−₹0.00</span>
+    </div>
+    <div class="line muted">
+      <span>Subtotal</span>
+      <span class="val" id="lineSubtotal">₹0.00</span>
+    </div>
+    <div class="line tax">
+      <span id="taxLabel">Tax</span>
+      <span class="val" id="lineTax">+₹0.00</span>
+    </div>
 
-  <script>
-    async function calculate() {
-      const basePrice = document.getElementById("basePrice").value;
-      const discount = document.getElementById("discount").value;
-      const tax = document.getElementById("tax").value;
+    <hr class="divider heavy">
 
-      // PASTE YOUR RENDER URL BELOW, replacing the example one
-      const apiUrl = "https://price-api-cpkf.onrender.com";
+    <div class="total-row">
+      <span class="label">Total</span>
+      <span class="amount" id="total">₹0.00</span>
+    </div>
 
+    <div class="status" id="status"></div>
+
+    <div class="barcode" id="barcode"></div>
+    <div class="footer-note">Thank you for calculating</div>
+  </div>
+
+<script>
+  // PASTE YOUR RENDER URL BELOW
+  const apiUrl = "https://price-api-cpkf.onrender.com";
+
+  const basePriceEl = document.getElementById("basePrice");
+  const discountEl = document.getElementById("discount");
+  const taxEl = document.getElementById("tax");
+  const statusEl = document.getElementById("status");
+  const totalEl = document.getElementById("total");
+
+  const fmt = (n) => "₹" + Number(n).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  let debounceTimer = null;
+
+  function renderLocalBreakdown(base, discountPct, taxPct) {
+    const discountAmt = base * discountPct / 100;
+    const subtotal = base - discountAmt;
+    const taxAmt = subtotal * taxPct / 100;
+
+    document.getElementById("lineBase").innerText = fmt(base);
+    document.getElementById("discountLabel").innerText = `Discount (${discountPct}%)`;
+    document.getElementById("lineDiscount").innerText = "−" + fmt(discountAmt);
+    document.getElementById("lineSubtotal").innerText = fmt(subtotal);
+    document.getElementById("taxLabel").innerText = `Tax (${taxPct}%)`;
+    document.getElementById("lineTax").innerText = "+" + fmt(taxAmt);
+  }
+
+  async function calculate() {
+    const base = parseFloat(basePriceEl.value) || 0;
+    const discountPct = parseFloat(discountEl.value) || 0;
+    const taxPct = parseFloat(taxEl.value) || 0;
+
+    renderLocalBreakdown(base, discountPct, taxPct);
+    statusEl.classList.remove("error");
+    statusEl.innerText = "calculating…";
+
+    try {
       const response = await fetch(
-        `${apiUrl}/price?base_price=${basePrice}&discount_percent=${discount}&tax_percent=${tax}`
+        `${apiUrl}/price?base_price=${base}&discount_percent=${discountPct}&tax_percent=${taxPct}`
       );
+      if (!response.ok) throw new Error("Server error");
       const data = await response.json();
 
-      document.getElementById("result").innerText =
-        "Final Price: ₹" + data.final_price;
+      totalEl.innerText = fmt(data.final_price);
+      totalEl.classList.add("pulse");
+      setTimeout(() => totalEl.classList.remove("pulse"), 150);
+      statusEl.innerText = "confirmed by server ✓";
+    } catch (err) {
+      statusEl.classList.add("error");
+      statusEl.innerText = "server is waking up — retrying…";
+      setTimeout(calculate, 4000);
     }
-  </script>
+  }
+
+  function scheduleCalculate() {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(calculate, 350);
+  }
+
+  [basePriceEl, discountEl, taxEl].forEach((el) => {
+    el.addEventListener("input", scheduleCalculate);
+  });
+
+  function drawBarcode() {
+    const barcode = document.getElementById("barcode");
+    let html = "";
+    for (let i = 0; i < 40; i++) {
+      const w = Math.random() > 0.7 ? 3 : 1.5;
+      const h = 16 + Math.random() * 16;
+      html += `<span style="width:${w}px;height:${h}px;"></span>`;
+    }
+    barcode.innerHTML = html;
+  }
+
+  drawBarcode();
+  calculate();
+</script>
+
 </body>
 </html>
